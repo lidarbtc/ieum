@@ -2,7 +2,7 @@ export const notesEn = new Map([
   ['정식 우아힙 활동', 'Official promotions for “WooAh HIP”.'],
   ['2022 실제 음원 및 음악방송 데뷔한 프로젝트', 'A project group that released music and debuted on music shows in 2022.'],
   ['2022 프로젝트 재데뷔', 'Debuted again in a project group in 2022.'],
-  ['여성 록밴드 보컬 이후 프로젝트 걸그룹', 'Joined a female project group after singing in a female rock band.'],
+  ['여성 록밴드 보컬 이후 프로젝트 걸그룹', 'Joined a project girl group after singing in a female rock band.'],
   ['현아 본인 인터뷰에서 2007 원더걸스 데뷔 후 포미닛 재활동 확인', 'HyunA confirmed in an interview that she debuted with Wonder Girls in 2007 and later performed with 4minute.'],
   ['2001 투야, 2007 베이비복스 리브 활동 본인 인터뷰', 'An interview confirms her activity with To-Ya in 2001 and Baby V.O.X Re.V in 2007.'],
   ['2002 이삭 N 지연 데뷔 후 천상지희 활동', 'Debuted with Isak N Jiyeon in 2002 and later performed with The Grace.'],

@@ -16,11 +16,11 @@ export const site = {
   english: {
     name: 'Ieum',
     alternateName: '이음',
-    title: 'Ieum · Female K-pop group connections',
-    description: 'Explore a 3D map of female K-pop groups connected by shared members. Search groups and members, follow connection paths and check the sources.',
+    title: 'Ieum · K-pop girl group connections',
+    description: 'Explore how K-pop girl groups are connected through shared members.',
     language: 'en',
     locale: 'en_US',
-    imageAlt: 'Ieum. A map of female idol group connections.',
+    imageAlt: 'Ieum. A map of K-pop girl group connections.',
   },
 };
 
