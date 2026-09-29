@@ -1,10 +1,13 @@
+import {aliases} from './group-names.js';
+import {groupPath,hasGroupRecord} from './groups.js';
+import {displayNotes} from './notes.js';
 import {GlobeView} from './globe-view.js';
 import {icon,mountIcons} from './icons.js';
 import {forceSimulation,forceLink,forceManyBody,forceCenter,forceCollide} from 'd3-force';
 import DATA from '../data/girl-group-graph.json';
 import {normalize,scopedData,analyze,shortestPath,searchNodes} from './core.js';
 const $=s=>document.querySelector(s),ink='#264757',accent='#079cc3',palette=['#2398bf','#65bcae','#8ba8d0','#74b2c5','#b3b887','#a6adbc'];
-const aliases={'아이오아이':['IOI','I.O.I'],'이달의 소녀':['LOONA','이달소'],'굿데이':['GOOD DAY'],'소녀시대':['SNSD','Girls Generation'],'여자친구':['GFRIEND'],'우주소녀':['WJSN'],'버스터즈':['BUSTERS'],'프리스틴':['PRISTIN'],'예아':['Ye-A'],'칸':['KHAN'],'디아크':['The Ark'],'마마돌':['MAMADOL'],'마마무':['MAMAMOO'],'네온펀치':['NEONPUNCH'],'체리블렛':['Cherry Bullet'],'베스티':['BESTie'],'브브걸':['BBGIRLS'],'브레이브걸스':['Brave Girls'],'밍스':['MINX'],'드림캐쳐':['Dreamcatcher'],'블랙스완':['Blackswan'],'라니아':['Rania'],'투앤비':['2NB'],'Feverse':['피버스','FE:VERSE'],'Kep1er':['케플러'],'CLASSy':['클라씨','CLASS:y'],'ARTMS':['아르테미스'],'Loossemble':['루셈블'],'cignature':['시그니처'],'LATENCY':['레이턴시'],'UNIS':['유니스'],'IVE':['아이브'],'LE SSERAFIM':['르세라핌'],'IZ*ONE':['아이즈원'],'aespa':['에스파'],'Red Velvet':['레드벨벳'],'TWICE':['트와이스'],'BLACKPINK':['블랙핑크'],'NewJeans':['뉴진스']};
+
 let scope,analysis,byId,positions,graph,renderer,selected=null,hovered=null,path=[],pathEdges=new Set(),neighbors=new Set(),activeComponent='all',searchMatches=[];
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function button(text,fn,cls=''){let b=document.createElement('button');b.textContent=text;b.type='button';b.className=cls;b.onclick=fn;return b;}
@@ -68,8 +71,9 @@ function sourcesMarkup(e){return e.sources.filter(u=>/^https?:\/\//.test(u)).map
 function renderDetails(){const n=byId.get(selected),links=analysis.adjacency.get(selected),categories={project:'프로젝트',external:'해외·혼성',unit:'유닛',band:'여성 밴드',kids:'키즈 그룹',virtual:'버추얼 그룹'};
  const panel=$('#details');panel.innerHTML=`<h2>${safe(n.name)}</h2><div class="group-meta"><span>${n.year||'연도 미확인'}</span><span>·</span><span>${categories[n.category]||'여성 그룹'}</span></div><div class="group-actions"></div><p class="connection-count">공유 멤버로 이어진 그룹 <strong>${links.length}개</strong></p>`;
  panel.querySelector('.group-actions').append(button('여기서 경로 찾기',()=>{$('#path-from').value=selected;switchTab('path');$('#path-to').focus();}),button('주변 확대',()=>focusNodes([selected,...neighbors])));
- if(!links.length){const p=document.createElement('p');p.className='muted';p.textContent='아직 연결을 찾지 못했어요. 이 그룹 멤버들의 모든 활동 이력을 확인한 것은 아닙니다.';panel.append(p);return;}
- [...links].sort((a,b)=>a.id.localeCompare(b.id,'ko')).forEach(({id,edge:e})=>{const section=document.createElement('div');section.className='connection';section.innerHTML=`<div class="connection-title"></div><p class="member-names">${safe(e.members.join(' · '))}</p><div class="evidence">${e.evidence==='profile'?'프로필·위키':'기사·공식 자료'}${e.derived?' · 활동 이력 확인':''}${e.types.includes('rebrand')?' · 개명/재편':''}</div><div class="sources">${sourcesMarkup(e)}</div>`;section.querySelector('.connection-title').append(button(id,()=>selectNode(id)),Object.assign(document.createElement('span'),{innerHTML:icon('up')}));if(e.notes.length){const d=document.createElement('details'),summary=document.createElement('summary');summary.textContent='활동 메모';d.append(summary);const p=document.createElement('p');p.className='edge-note';p.textContent=e.notes.join(' ');d.append(p);section.append(d)}panel.append(section);});
+ if(hasGroupRecord(DATA,selected))panel.querySelector('.group-actions').append(Object.assign(document.createElement('a'),{href:groupPath(selected),textContent:'활동 기록'}));
+ if(!links.length){const p=document.createElement('p');p.className='muted';p.textContent='현재 자료에서 다른 그룹과의 연결을 찾지 못했어요.';panel.append(p);return;}
+ [...links].sort((a,b)=>a.id.localeCompare(b.id,'ko')).forEach(({id,edge:e})=>{const section=document.createElement('div');section.className='connection';section.innerHTML=`<div class="connection-title"></div><p class="member-names">${safe(e.members.join(' · '))}</p><div class="evidence">${e.evidence==='profile'?'프로필·위키':'기사·공식 자료'}${e.derived?' · 활동 이력 확인':''}${e.types.includes('rebrand')?' · 개명/재편':''}</div><div class="sources">${sourcesMarkup(e)}</div>`;section.querySelector('.connection-title').append(button(id,()=>selectNode(id)),Object.assign(document.createElement('span'),{innerHTML:icon('up')}));if(displayNotes(e.notes).length){const d=document.createElement('details'),summary=document.createElement('summary');summary.textContent='활동 메모';d.append(summary);const p=document.createElement('p');p.className='edge-note';p.textContent=displayNotes(e.notes).join(' ');d.append(p);section.append(d)}panel.append(section);});
 }
 function hideResults(){$('#results').hidden=true;$('#search').setAttribute('aria-expanded','false');}
 function search(){const q=$('#search').value.trim();if(!q){hideResults();return;}searchMatches=searchNodes(scope.nodes,scope.edges,q,aliases);const box=$('#results');box.replaceChildren();box.hidden=false;$('#search').setAttribute('aria-expanded','true');const count=document.createElement('div');count.className='result-count';count.textContent=searchMatches.length?`${searchMatches.length}개 결과${searchMatches.length>30?' · 상위 30개 표시':''}`:'검색 결과가 없어요. 이름이나 표시 범위를 확인해 주세요.';box.append(count);
@@ -98,3 +102,9 @@ $('#about-scope').onclick=()=>aboutDialog.showModal();
 $('#close-about').onclick=()=>aboutDialog.close();
 aboutDialog.addEventListener('click',event=>{if(event.target===aboutDialog){const r=aboutDialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)aboutDialog.close();}});
 configureScope();
+const requestedGroup=new URLSearchParams(location.search).get('group');
+const requestedNode=DATA.nodes.find(node=>node.id===requestedGroup);
+if(requestedNode){if(['unit','external'].includes(requestedNode.category)){$('#expanded').checked=true;configureScope();}selectNode(requestedNode.id);}
+function showLinkedAbout(){if(location.hash==='#about'&&!aboutDialog.open)aboutDialog.showModal();}
+window.addEventListener('hashchange',showLinkedAbout);
+showLinkedAbout();

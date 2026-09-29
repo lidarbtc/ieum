@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, resolve, sep } from 'node:path';
 
@@ -38,15 +38,16 @@ export function createSiteServer(directory) {
       response.writeHead(405, { Allow: 'GET, HEAD' }).end();
       return;
     }
-    let pathname;
+    let pathname, parsedUrl;
     try {
-      pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+      parsedUrl = new URL(request.url, 'http://localhost');
+      pathname = decodeURIComponent(parsedUrl.pathname);
     } catch {
       send(400, 'Invalid URL', 'text/plain; charset=utf-8');
       return;
     }
-    if (pathname === '/index.html') {
-      response.writeHead(301, { Location: '/', 'Cache-Control': 'no-store' }).end();
+    if (pathname.endsWith('/index.html')) {
+      response.writeHead(301, { Location: encodeURI(pathname.slice(0, -'index.html'.length)) + parsedUrl.search, 'Cache-Control': 'no-store' }).end();
       return;
     }
     const relativePath = pathname === '/' ? 'index.html' : pathname.slice(1);
@@ -54,12 +55,19 @@ export function createSiteServer(directory) {
       await notFound();
       return;
     }
-    const path = resolve(output, relativePath);
+    let path = resolve(output, relativePath);
     if (!path.startsWith(output + sep)) {
       await notFound();
       return;
     }
     try {
+      if ((await stat(path)).isDirectory()) {
+        if (!pathname.endsWith('/')) {
+          response.writeHead(301, { Location: encodeURI(pathname) + '/' + parsedUrl.search }).end();
+          return;
+        }
+        path = resolve(path, 'index.html');
+      }
       const data = await readFile(path);
       send(200, data, contentTypes.get(extname(path)) || 'text/plain; charset=utf-8');
     } catch {

@@ -8,4 +8,9 @@ export const site = {
   locale: 'ko_KR',
   image: 'og-image.png',
   imageAlt: '이음. 여자 아이돌 연결 지도.',
+  repository: 'https://github.com/lidarbtc/ieum',
+  analytics: {
+    script: 'https://m.lidar.blog/script.js',
+    websiteId: 'b71b2849-7487-4800-a0f6-9b08c514501a',
+  },
 };

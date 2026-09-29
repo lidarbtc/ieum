@@ -10,8 +10,9 @@ __SEO_HEAD__
 <body>
 <header>
  <a class="brand" href="#" id="home" aria-label="이음, 처음으로"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span><span>이음</span></a>
- <nav aria-label="주요 메뉴"><button id="nav-map" class="nav-item active" aria-current="page">지도</button><button id="nav-path" class="nav-item">경로 찾기</button><button id="about" class="nav-item">이음 소개</button></nav>
+ <nav aria-label="주요 메뉴"><button id="nav-map" class="nav-item active" aria-current="page">지도</button><a class="nav-item" href="/groups/">그룹 목록</a><button id="nav-path" class="nav-item">경로 찾기</button><button id="about" class="nav-item">이음 소개</button></nav>
  <div class="search-wrap"><label class="sr-only" for="search">그룹 또는 공유 멤버 검색</label><span data-icon="search" class="search-icon"></span><input id="search" type="search" placeholder="그룹, 멤버 검색" autocomplete="off" aria-controls="results" aria-expanded="false"><kbd>/</kbd><div id="results" class="results" hidden></div></div>
+ __GITHUB_LINK__
  <button id="inspector-toggle" class="icon-button mobile-only" aria-label="그룹 정보 열기" aria-expanded="false"><span data-icon="sliders"></span></button>
 </header>
 <main>
@@ -40,6 +41,13 @@ __SEO_HEAD__
 
  </aside>
 </main>
-<dialog id="about-dialog" aria-labelledby="about-title"><div class="dialog-top"><span class="brand small-brand">이음</span><button id="close-about" class="icon-button" aria-label="소개 닫기"><span data-icon="close"></span></button></div><h2 id="about-title">여자 아이돌의 연결 지도</h2><p>여자 아이돌이 여러 그룹에서 활동한 기록을 모았습니다. 그룹을 누르면 함께한 멤버와 출처를 볼 수 있습니다.</p><h3>선 하나는 무슨 뜻인가요?</h3><p>두 그룹에서 정식 활동한 같은 멤버가 있다는 뜻입니다. 세 그룹에서 활동했다면 세 쌍을 모두 연결합니다. 활동 순서를 나타내는 선은 아닙니다.</p><h3>어디까지 조사했나요?</h3><p>프로젝트, 여성 밴드, 키즈 그룹을 포함했습니다. 유닛·해외·혼성 그룹은 표시 범위에서 켤 수 있습니다.</p><p>2026년 9월 15일의 1차 조사 자료입니다. 멤버 전원의 활동 이력을 검증하지는 못했습니다. 선이 없는 그룹은 아직 연결을 찾지 못한 경우입니다.</p><p>멤버 검색은 조사된 연결에 등장하는 사람만 찾습니다.</p></dialog>
+<dialog id="about-dialog" aria-labelledby="about-title">
+<div class="dialog-top"><span class="brand small-brand">이음</span><button id="close-about" class="icon-button" aria-label="소개 닫기"><span data-icon="close"></span></button></div>
+<h2 id="about-title">같은 멤버로 이어진 그룹들</h2>
+<p>한 사람이 두 그룹에서 활동했다면, 두 그룹을 선으로 이었어요.</p>
+<p>권은비는 예아, IZ*ONE, Feverse에서 활동했어요. 그래서 이 세 그룹은 서로 연결돼요.</p>
+<p>점을 누르면 누구 때문에 연결됐는지 볼 수 있어요. ‘경로 찾기’에서는 두 그룹이 어떤 멤버를 거쳐 이어지는지 보여줘요.</p>
+<div class="about-links"><a href="/groups/">그룹별 활동 기록</a><a href="https://github.com/lidarbtc/ieum" target="_blank" rel="noopener noreferrer">자료와 코드</a></div>
+</dialog>
 <script>__JS__</script>
 </body></html>
