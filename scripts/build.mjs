@@ -1,5 +1,6 @@
 import { build } from 'esbuild';
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { renderSeoHead, renderRobots, renderSitemap } from './seo.mjs';
+import { copyFile, cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -23,10 +24,15 @@ export async function buildApp() {
   ]);
   const javascript = result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
   const html = template
+    .replace('__SEO_HEAD__', () => renderSeoHead())
     .replace('__CSS__', () => css)
     .replace('__JS__', () => javascript);
+  await rm(outputDirectory, { recursive: true, force: true });
   await mkdir(outputDirectory, { recursive: true });
+  await cp(resolve(root, 'public'), outputDirectory, { recursive: true });
   await writeFile(resolve(outputDirectory, 'index.html'), html);
+  await writeFile(resolve(outputDirectory, 'robots.txt'), renderRobots());
+  await writeFile(resolve(outputDirectory, 'sitemap.xml'), renderSitemap());
   await copyFile(resolve(root, 'LICENSE'), resolve(outputDirectory, 'LICENSE'));
   await copyFile(
     resolve(root, 'THIRD_PARTY_LICENSES.txt'),
