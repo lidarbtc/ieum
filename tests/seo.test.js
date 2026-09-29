@@ -183,7 +183,9 @@ test('group pages contain matching navigation and local about/path dialogs', asy
     assert.match(html, /<button[^>]+data-open-dialog="about-dialog"[^>]*>이음 소개<\/button>/);
     assert.ok(html.includes(about));
     assert.match(html, /<dialog id="content-path-dialog"/);
-    assert.match(html, /src="\/content-navigation\.js"/);
+    assert.match(html, /<script id="content-navigation-script">/);
+    assert.ok(html.indexOf('<dialog id="content-path-dialog"') < html.indexOf('<script id="content-navigation-script">'));
+    assert.doesNotMatch(html, /<script[^>]+src="\/content-navigation\.js"/);
     assert.doesNotMatch(html, /href="\/#about"|__ABOUT_DIALOG__/);
   }
   const navigation = await readFile(resolve(outputDirectory, 'content-navigation.js'), 'utf8');

@@ -42,7 +42,7 @@ export async function buildApp() {
   await writeFile(resolve(outputDirectory, 'index.html'), html);
   await writeFile(resolve(outputDirectory, 'robots.txt'), renderRobots());
   const data = JSON.parse(rawData);
-  const catalog = await writeGroupPages({ data, outputDirectory, css: css + '\n' + contentCss, javascript: catalogBundle.outputFiles[0].text, aboutMarkup, pathMarkup });
+  const catalog = await writeGroupPages({ data, outputDirectory, css: css + '\n' + contentCss, javascript: catalogBundle.outputFiles[0].text, aboutMarkup, pathMarkup, navigationJavascript: navigationBundle.outputFiles[0].text });
   await writeFile(resolve(outputDirectory, 'content-navigation.js'), navigationBundle.outputFiles[0].text);
   await writeFile(resolve(outputDirectory, 'path-data.json'), JSON.stringify(createPathData(data, catalog)));
   await writeFile(resolve(outputDirectory, 'sitemap.xml'), renderSitemap(['/', '/groups/', ...catalog.map(group => group.path)]));

@@ -9,7 +9,7 @@ import { escapeAttribute as escape, renderSeoHead } from './seo.mjs';
 export function githubLink(className = 'github-link') {
   return `<a class="${className}" href="${escape(site.repository)}" target="_blank" rel="noopener noreferrer" aria-label="GitHub 저장소">${icon('github')}<span class="sr-only">GitHub 저장소</span></a>`;
 }
-function pageShell({ title, description, path, body, css, javascript = '', schemas, aboutMarkup, pathMarkup, groupId = '', groupCategory = '' }) {
+function pageShell({ title, description, path, body, css, javascript = '', schemas, aboutMarkup, pathMarkup, navigationJavascript, groupId = '', groupCategory = '' }) {
   return `<!doctype html>
 <html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#eff7f8">
@@ -21,7 +21,7 @@ ${renderSeoHead({ title, description, path, schemas })}
 <footer class="content-footer"><a href="/">이음</a><a href="/groups/">그룹 목록</a><a href="${escape(site.repository)}" target="_blank" rel="noopener noreferrer">자료와 코드</a></footer>
 ${aboutMarkup}
 ${pathMarkup}
-<script async src="/content-navigation.js"></script>
+${navigationJavascript ? `<script id="content-navigation-script">${navigationJavascript.replace(/<\/script/gi, '<\\/script')}</script>` : ''}
 ${javascript ? `<script>${javascript.replace(/<\/script/gi, '<\\/script')}</script>` : ''}
 </body></html>\n`;
 }
@@ -87,8 +87,8 @@ ${sections.filter(([, groups]) => groups.length).map(([title, groups]) => `<sect
   const schemas = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, url: new URL(path, site.url).href, description, inLanguage: site.language, isPartOf: { '@id': `${site.url}#website` } };
   return pageShell({ title, description, path, body, css, javascript, schemas, ...dialogs });
 }
-export async function writeGroupPages({ data, outputDirectory, css, javascript, aboutMarkup, pathMarkup }) {
-  const dialogs = { aboutMarkup, pathMarkup };
+export async function writeGroupPages({ data, outputDirectory, css, javascript, aboutMarkup, pathMarkup, navigationJavascript }) {
+  const dialogs = { aboutMarkup, pathMarkup, navigationJavascript };
   const catalog = createGroupCatalog(data);
   const groupsDirectory = resolve(outputDirectory, 'groups');
   await mkdir(groupsDirectory, { recursive: true });
