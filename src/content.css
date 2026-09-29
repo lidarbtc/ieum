@@ -101,3 +101,6 @@ body.content-page{height:auto;min-height:100svh;overflow:auto;background:linear-
  .content-page header #content-nav .nav-item.active:after{display:none}
  .content-page header #content-nav .nav-item.active{background:#edf6f9}
 }
+
+.content-page header>.language-link{margin-left:auto}
+.content-page header>.github-link{margin-left:0}

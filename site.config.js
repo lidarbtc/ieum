@@ -13,4 +13,15 @@ export const site = {
     script: 'https://m.lidar.blog/script.js',
     websiteId: 'b71b2849-7487-4800-a0f6-9b08c514501a',
   },
+  english: {
+    name: 'Ieum',
+    alternateName: '이음',
+    title: 'Ieum · Female K-pop group connections',
+    description: 'Explore a 3D map of female K-pop groups connected by shared members. Search groups and members, follow connection paths and check the sources.',
+    language: 'en',
+    locale: 'en_US',
+    imageAlt: 'Ieum. A map of female idol group connections.',
+  },
 };
+
+export const siteFor = (language = 'ko') => language === 'en' ? { ...site, ...site.english } : site;

@@ -1,3 +1,5 @@
+import { notesEn } from './notes-en.js';
+
 const repeated = new Set([
   '동일 멤버의 출처 확인 이력을 모든 그룹 쌍으로 투영.',
   '동일 인물 이력의 직접 공유멤버 엣지',
@@ -26,8 +28,9 @@ const rewritten = new Map([
   ['공식 MAJORS 비안 프로필 및 데뷔 앨범 확인. MIDNIGHT는 pre-debut여서 제외', 'MAJORS의 비안 프로필과 데뷔 앨범을 확인했습니다. MIDNIGHT는 데뷔 전 소속이어서 연결하지 않았습니다.'],
   ['다섯 멤버 재데뷔. 같은 소속사 그룹 전체 리브랜딩으로 취급하지 않음.', '다섯 멤버가 다시 데뷔한 이력입니다. 그룹 전체의 개명으로 분류하지 않았습니다.'],
 ]);
-export function displayNotes(notes) {
-  return [...new Set(notes.filter((note) => !repeated.has(note)).map((note) =>
+export function displayNotes(notes = [], language = 'ko') {
+  const displayed = [...new Set(notes.filter((note) => !repeated.has(note)).map((note) =>
     (rewritten.get(note) || note).replace(/(\d)년(\d)/g, '$1년 $2').replace(/(\d)월(\d)/g, '$1월 $2'),
   ))];
+  return language === 'en' ? displayed.map(note => notesEn.get(note) || note) : displayed;
 }

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko">
+<html lang="{{lang}}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -9,32 +9,33 @@ __SEO_HEAD__
 </head>
 <body>
 <header>
- <a class="brand" href="#" id="home" aria-label="이음, 처음으로"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span><span>이음</span></a>
- <nav aria-label="주요 메뉴"><button id="nav-map" class="nav-item active" aria-current="page">지도</button><a class="nav-item" href="/groups/">그룹 목록</a><button id="nav-path" class="nav-item">경로 찾기</button><button id="about" class="nav-item">이음 소개</button></nav>
- <div class="search-wrap"><label class="sr-only" for="search">그룹 또는 공유 멤버 검색</label><span data-icon="search" class="search-icon"></span><input id="search" type="search" placeholder="그룹, 멤버 검색" autocomplete="off" aria-controls="results" aria-expanded="false"><kbd>/</kbd><div id="results" class="results" hidden></div></div>
+ <a class="brand" href="{{homePath}}" id="home" aria-label="{{homeLabel}}"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span><span>{{brand}}</span></a>
+ <nav aria-label="{{mainMenu}}"><button id="nav-map" class="nav-item active" aria-current="page">{{map}}</button><a class="nav-item" href="{{groupsPath}}">{{groups}}</a><button id="nav-path" class="nav-item">{{findPath}}</button><button id="about" class="nav-item">{{about}}</button></nav>
+ <div class="search-wrap"><label class="sr-only" for="search">{{searchLabel}}</label><span data-icon="search" class="search-icon"></span><input id="search" type="search" placeholder="{{searchPlaceholder}}" autocomplete="off" aria-controls="results" aria-expanded="false"><kbd>/</kbd><div id="results" class="results" hidden></div></div>
+ __LANGUAGE_LINK__
  __GITHUB_LINK__
- <button id="inspector-toggle" class="icon-button mobile-only" aria-label="그룹 정보 열기" aria-expanded="false"><span data-icon="sliders"></span></button>
+ <button id="inspector-toggle" class="icon-button mobile-only" aria-label="{{openInspector}}" aria-expanded="false"><span data-icon="sliders"></span></button>
 </header>
 <main>
- <section class="workspace" aria-label="공유 멤버 지도">
-  <div class="map-toolbar"><div class="map-heading"><h1 id="map-title">여자 아이돌 연결 지도</h1></div><button id="reset" class="reset-button" aria-label="처음 위치"><span data-icon="reset"></span><span>처음 위치</span></button></div>
-  <div id="graph" role="group" aria-label="회전하고 확대할 수 있는 여자 아이돌 연결 지도"></div>
+ <section class="workspace" aria-label="{{mapRegion}}">
+  <div class="map-toolbar"><div class="map-heading"><h1 id="map-title">{{mapTitle}}</h1></div><button id="reset" class="reset-button" aria-label="{{reset}}"><span data-icon="reset"></span><span>{{reset}}</span></button></div>
+  <div id="graph" role="group" aria-label="{{mapDescription}}"></div>
   <div id="error" class="error" role="alert" hidden></div>
-  <div class="map-controls" role="group" aria-label="지도 조작"><button id="zoom-in" aria-label="확대"><span data-icon="plus"></span></button><button id="zoom-out" aria-label="축소"><span data-icon="minus"></span></button></div>
+  <div class="map-controls" role="group" aria-label="{{mapControls}}"><button id="zoom-in" aria-label="{{zoomIn}}"><span data-icon="plus"></span></button><button id="zoom-out" aria-label="{{zoomOut}}"><span data-icon="minus"></span></button></div>
 
  </section>
- <aside id="inspector" aria-label="그룹과 경로 정보">
-  <div class="panel-top"><span>둘러보기</span><button class="icon-button mobile-only" id="close-inspector" aria-label="그룹 정보 닫기"><span data-icon="close"></span></button><span class="panel-counter" id="scope-count">617개 그룹</span></div>
+ <aside id="inspector" aria-label="{{inspector}}">
+  <div class="panel-top"><span>{{browse}}</span><button class="icon-button mobile-only" id="close-inspector" aria-label="{{closeInspector}}"><span data-icon="close"></span></button><span class="panel-counter" id="scope-count"></span></div>
   <div class="scope">
-   <div class="component-picker"><input id="component" type="hidden" value="all"><button id="component-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="component-menu"><span id="component-label">모든 연결 묶음</span><span data-icon="chevron"></span></button><div id="component-menu" role="listbox" aria-label="연결 묶음" hidden></div></div>
-   <details class="scope-options"><summary><span data-icon="sliders"></span>표시 범위</summary><label class="check"><input type="checkbox" id="isolates"><span>연결을 못 찾은 그룹도 보기 <em id="isolate-count"></em></span></label><label class="check"><input type="checkbox" id="expanded"><span>유닛·해외·혼성 그룹 포함</span></label><p>추가로 조사한 그룹만 포함합니다.</p><button id="about-scope" class="scope-about" type="button">이음 소개</button></details>
+   <div class="component-picker"><input id="component" type="hidden" value="all"><button id="component-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="component-menu"><span id="component-label">{{allClusters}}</span><span data-icon="chevron"></span></button><div id="component-menu" role="listbox" aria-label="{{clusters}}" hidden></div></div>
+   <details class="scope-options"><summary><span data-icon="sliders"></span>{{scope}}</summary><label class="check"><input type="checkbox" id="isolates"><span>{{showUnlinked}} <em id="isolate-count"></em></span></label><label class="check"><input type="checkbox" id="expanded"><span>{{expanded}}</span></label><p>{{scopeNote}}</p><button id="about-scope" class="scope-about" type="button">{{about}}</button></details>
   </div>
-  <div class="tabs" role="tablist" aria-label="탐색 방식"><button id="tab-group" class="active" role="tab" aria-selected="true" aria-controls="group-panel"><span data-icon="map"></span>그룹</button><button id="tab-path" role="tab" aria-selected="false" aria-controls="path-panel"><span data-icon="route"></span>연결 경로</button></div>
+  <div class="tabs" role="tablist" aria-label="{{navigationMode}}"><button id="tab-group" class="active" role="tab" aria-selected="true" aria-controls="group-panel"><span data-icon="map"></span>{{groupSection}}</button><button id="tab-path" role="tab" aria-selected="false" aria-controls="path-panel"><span data-icon="route"></span>{{path}}</button></div>
   <div class="inspector-content">
    <section id="group-panel" role="tabpanel" aria-labelledby="tab-group"><div id="details"></div></section>
    <section id="path-panel" role="tabpanel" aria-labelledby="tab-path" hidden>
-    <h2>두 그룹을 잇는 멤버</h2><p class="muted">두 그룹 사이의 가장 짧은 경로를 찾습니다.</p>
-    <form id="path-form"><div class="path-fields"><label for="path-from">출발</label><input id="path-from" list="group-names" value="버스터즈" autocomplete="off"><span class="field-connector" aria-hidden="true"></span><label for="path-to">도착</label><input id="path-to" list="group-names" value="aespa" autocomplete="off"></div><datalist id="group-names"></datalist><button class="primary" type="submit">경로 찾기 <span data-icon="arrow"></span></button></form>
+    <h2>{{pathHeading}}</h2><p class="muted">{{pathDescription}}</p>
+    <form id="path-form"><div class="path-fields"><label for="path-from">{{from}}</label><input id="path-from" list="group-names" value="{{defaultFrom}}" autocomplete="off"><span class="field-connector" aria-hidden="true"></span><label for="path-to">{{to}}</label><input id="path-to" list="group-names" value="aespa" autocomplete="off"></div><datalist id="group-names"></datalist><button class="primary" type="submit">{{findPath}} <span data-icon="arrow"></span></button></form>
     <div id="path-result" aria-live="polite"></div>
    </section>
   </div>

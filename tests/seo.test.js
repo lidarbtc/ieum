@@ -5,9 +5,12 @@ import { once } from 'node:events';
 import { resolve } from 'node:path';
 import { buildApp, root, outputDirectory } from '../scripts/build.mjs';
 import { createSiteServer } from '../scripts/serve.mjs';
-import { analyze, scopedData, shortestPath } from '../src/core.js';
+import { analyze, scopedData, shortestPath, searchNodes } from '../src/core.js';
 import { site } from '../site.config.js';
 import { createGroupCatalog, groupMapPath, groupPath, pathMapPath } from '../src/groups.js';
+import { localizeData, aliasesFor, memberSearchAliases } from '../src/localized-data.js';
+import { groupName, memberName } from '../src/names-en.js';
+import { displayNotes } from '../src/notes.js';
 
 let head, origin, server, catalog, homepage;
 before(async () => {
@@ -81,7 +84,7 @@ test('build copies public assets and emits a sitemap for all published pages', a
   assert.deepEqual(await readFile(resolve(outputDirectory, 'og-image.png')), source);
   assert.match(await readFile(resolve(outputDirectory, 'robots.txt'), 'utf8'), /Sitemap: https:\/\/ieum\.lidar\.blog\/sitemap\.xml/);
   const sitemap = await readFile(resolve(outputDirectory, 'sitemap.xml'), 'utf8');
-  assert.equal((sitemap.match(/<loc>/g) || []).length, 169);
+  assert.equal((sitemap.match(/<loc>/g) || []).length, 338);
   for (const group of catalog) assert.ok(sitemap.includes(new URL(group.path, site.url).href));
   assert.match(sitemap, /<loc>https:\/\/ieum\.lidar\.blog\/<\/loc>/);
   assert.doesNotMatch(sitemap, /lastmod|localhost|pages\.dev/);
@@ -218,4 +221,90 @@ test('map path links preserve endpoints and expansion without fragment navigatio
   assert.equal(url.searchParams.get('to'), 'ARTMS');
   assert.equal(url.searchParams.get('expanded'), '1');
   assert.equal(url.hash, '');
+});
+
+test('English routes contain translated content before JavaScript runs', async () => {
+  for (const path of ['/en/', '/en/groups/', '/en/groups/feverse/', groupPath('마이달링', 'en')]) {
+    const response = await fetch(origin + path);
+    assert.equal(response.status, 200, path);
+    const html = await response.text();
+    assert.match(html, /<html lang="en">/);
+    assert.match(html, /<nav[^>]+aria-label="Main menu"/);
+    assert.match(html, />Find a path<\/button>/);
+    assert.match(html, />About Ieum<\/button>/);
+    assert.match(html, /Kwon Eun-bi was a member of Ye-A/);
+    assert.equal((html.match(/data-website-id=/g) || []).length, 1);
+    assert.doesNotMatch(html, /__(SEO_HEAD|GITHUB_LINK|ABOUT_DIALOG|LANGUAGE_LINK|CSS|JS)__|\{\{\w+\}\}/);
+  }
+  const detail = await (await fetch(origin + '/en/groups/feverse/')).text();
+  assert.match(detail, /<h1>Feverse<\/h1>/);
+  assert.match(detail, /Shared members/);
+  assert.match(detail, /<th scope="row">Kwon Eun-bi<\/th>/);
+  const yeA = await (await fetch(origin + '/en/groups/ye-a/')).text();
+  assert.match(yeA, /Debuted in Ye-A under the name Kazoo/);
+  assert.match(detail, /href="\/en\/groups\/izone\/"/);
+  assert.match(detail, /href="\/en\/\?group=Feverse"/);
+  assert.match(detail, /data-language-link href="\/groups\/feverse\/"/);
+});
+
+test('all language pairs have reciprocal alternates and self-canonical metadata', async () => {
+  const paths = ['/', '/groups/', ...catalog.map(group => group.path)];
+  const sitemap = await readFile(resolve(outputDirectory, 'sitemap.xml'), 'utf8');
+  const metadataTitles = new Set();
+  for (const path of paths) {
+    for (const language of ['ko', 'en']) {
+      const localized = language === 'en' ? '/en' + path : path;
+      const html = await readFile(resolve(outputDirectory, decodeURIComponent(localized.slice(1)), 'index.html'), 'utf8');
+      const head = html.slice(0, html.indexOf('</head>'));
+      const url = new URL(localized, site.url).href;
+      assert.equal((head.match(/rel="canonical"/g) || []).length, 1);
+      assert.ok(head.includes(`rel="canonical" href="${url}"`), localized);
+      for (const [lang, paired] of [['ko', path], ['en', '/en' + path], ['x-default', path]]) {
+        assert.ok(head.includes(`rel="alternate" hreflang="${lang}" href="${new URL(paired, site.url).href}"`), localized);
+      }
+      assert.ok(sitemap.includes(`<loc>${url}</loc>`));
+      assert.ok(head.includes(`property="og:locale" content="${language === 'en' ? 'en_US' : 'ko_KR'}"`));
+      const schema = JSON.parse(head.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1]);
+      const page = schema['@graph']?.[0] || schema;
+      assert.equal(page.inLanguage, language === 'en' ? 'en' : 'ko-KR');
+      assert.equal(page.url, url);
+      const title = head.match(/<title>(.*?)<\/title>/)[1];
+      assert.ok(!metadataTitles.has(title), title);
+      metadataTitles.add(title);
+    }
+  }
+  assert.equal((sitemap.match(/<xhtml:link/g) || []).length, 338 * 3);
+});
+
+test('English names and notes cover the records without changing graph identities', async () => {
+  const raw = JSON.parse(await readFile(resolve(root, 'data/girl-group-graph.json'), 'utf8'));
+  const translated = localizeData(raw, 'en');
+  assert.deepEqual(translated.nodes.map(node => node.id), raw.nodes.map(node => node.id));
+  assert.deepEqual(translated.edges, raw.edges);
+  for (const node of raw.nodes) assert.doesNotMatch(groupName(node.id, 'en'), /[가-힣]/, node.id);
+  for (const edge of raw.edges) {
+    for (const member of edge.members) assert.doesNotMatch(memberName(member, 'en'), /[가-힣]/, member);
+    for (const note of displayNotes(edge.notes, 'en')) assert.doesNotMatch(note, /[가-힣]/, note);
+  }
+  const core = scopedData(translated);
+  const aliases = aliasesFor(raw), memberAliases = memberSearchAliases(raw);
+  for (const query of ['권은비', 'Kwon Eunbi', 'Kwon Eun-bi']) {
+    const results = searchNodes(core.nodes, core.edges, query, aliases, memberAliases);
+    assert.deepEqual(new Set(results.map(result => result.node.id)), new Set(['예아', 'IZ*ONE', 'Feverse']));
+  }
+  for (const query of ["Girls' Generation", 'Girls Generation', '소녀시대', 'SNSD']) {
+    assert.equal(searchNodes(core.nodes, core.edges, query, aliases, memberAliases)[0].node.id, '소녀시대');
+  }
+  const path = shortestPath(analyze(core.nodes, core.edges).adjacency, '버스터즈', 'aespa');
+  assert.equal(path.length, 8);
+  assert.equal(new URL(pathMapPath(path[0], path.at(-1), true, 'en'), site.url).pathname, '/en/');
+});
+
+test('English aliases redirect within their language and unknown routes stay 404', async () => {
+  for (const [path, target] of [['/en', '/en/'], ['/en/index.html', '/en/'], ['/en/groups/izone', '/en/groups/izone/'], ['/en/groups/izone/index.html', '/en/groups/izone/']]) {
+    const response = await fetch(origin + path, { redirect: 'manual' });
+    assert.equal(response.status, 301, path);
+    assert.equal(response.headers.get('location'), target, path);
+  }
+  assert.equal((await fetch(origin + '/en/groups/missing-group/')).status, 404);
 });

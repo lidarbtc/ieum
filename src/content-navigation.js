@@ -1,8 +1,16 @@
 import { mountIcons, icon } from './icons.js';
-import { analyze, normalize, scopedData, shortestPath } from './core.js';
-import { aliases } from './group-names.js';
+import { analyze, scopedData, shortestPath } from './core.js';
+import { resolveGroup, localizeData } from './localized-data.js';
+import { languageOf, localizedPath, text } from './i18n.js';
+import { groupName, memberName } from './names-en.js';
+import { initializeNavigation } from './navigation.js';
 import { groupMapPath, pathMapPath } from './groups.js';
 
+const language = languageOf(location.pathname);
+const t = (key, values) => text(key, language, values);
+const g = (id) => groupName(id, language);
+const m = (name) => memberName(name, language);
+const initialParams = new URLSearchParams(location.search);
 mountIcons();
 const menu = document.querySelector('#content-nav');
 const menuToggle = document.querySelector('#content-menu-toggle');
@@ -23,7 +31,7 @@ function fallbackFocus() {
 function setMenu(open) {
   menu.classList.toggle('is-open', open);
   menuToggle.setAttribute('aria-expanded', String(open));
-  menuToggle.setAttribute('aria-label', open ? '메뉴 닫기' : '메뉴 열기');
+  menuToggle.setAttribute('aria-label', t(open ? 'closeMenu' : 'openMenu'));
 }
 menuToggle.addEventListener('click', () => setMenu(menuToggle.getAttribute('aria-expanded') !== 'true'));
 document.addEventListener('pointerdown', (event) => {
@@ -37,13 +45,13 @@ function populateGroups() {
 }
 async function loadData() {
   if (data) return data;
-  status.textContent = '연결 자료를 불러오고 있어요.';
+  status.textContent = t('loading');
   form.querySelector('button[type="submit"]').disabled = true;
   try {
     if (!dataPromise) {
       dataPromise = fetch('/path-data.json').then((response) => {
         if (!response.ok) throw new Error('Path data unavailable');
-        return response.json();
+        return response.json().then(raw => localizeData(raw, language));
       });
     }
     data = await dataPromise;
@@ -52,7 +60,7 @@ async function loadData() {
     return data;
   } catch (error) {
     dataPromise = null;
-    status.textContent = '연결 자료를 불러오지 못했어요. 경로 찾기를 다시 눌러 주세요.';
+    status.textContent = t('loadError');
     throw error;
   } finally {
     form.querySelector('button[type="submit"]').disabled = false;
@@ -60,8 +68,9 @@ async function loadData() {
 }
 function setDefaults() {
   if (defaultsSet) return;
-  from.value = document.body.dataset.groupId || '버스터즈';
-  expanded.checked = ['unit', 'external'].includes(document.body.dataset.groupCategory);
+  from.value = g(initialParams.get('from') || document.body.dataset.groupId || '버스터즈');
+  to.value = g(initialParams.get('to') || 'aespa');
+  expanded.checked = initialParams.get('expanded') === '1' || ['unit', 'external'].includes(document.body.dataset.groupCategory);
   defaultsSet = true;
 }
 function openDialog(id, trigger) {
@@ -101,47 +110,62 @@ form.addEventListener('submit', async (event) => {
   result.replaceChildren();
   try { await loadData(); } catch { return; }
   const scope = scopedData(data, expanded.checked);
-  const resolve = (value) => scope.nodes.find((node) => normalize(node.name) === normalize(value) || (aliases[node.id] || []).some((name) => normalize(name) === normalize(value)))?.id;
+  const resolve = (value) => resolveGroup(scope, value);
   const start = resolve(from.value), end = resolve(to.value);
   if (!start || !end) {
-    status.textContent = '그룹 이름과 표시 범위를 확인해 주세요.';
+    status.textContent = t('invalidGroup');
     return;
   }
   const { adjacency } = analyze(scope.nodes, scope.edges);
   const path = shortestPath(adjacency, start, end);
   if (!path) {
-    status.textContent = '현재 자료에서 두 그룹의 연결을 찾지 못했어요.';
+    status.textContent = t('noPath');
     return;
   }
   status.textContent = '';
   const summary = document.createElement('p');
   summary.className = 'path-summary';
-  summary.textContent = `${path.length - 1}개 연결 · ${path.length}개 그룹`;
+  summary.textContent = t('pathSummary', {edges: path.length - 1, groups: path.length});
   result.append(summary);
   const nodes = new Map(scope.nodes.map((node) => [node.id, node]));
   path.forEach((id, index) => {
     const item = document.createElement('div');
     item.className = 'path-item';
     const link = document.createElement('a');
-    link.href = nodes.get(id).recordPath || groupMapPath(id);
+    link.href = nodes.get(id).recordPath ? localizedPath(nodes.get(id).recordPath, language) : groupMapPath(id, language);
     link.textContent = nodes.get(id).name;
     item.append(link);
     if (index < path.length - 1) {
       const member = document.createElement('p');
-      member.textContent = adjacency.get(id).find((entry) => entry.id === path[index + 1]).edge.members.join(' · ');
+      member.textContent = adjacency.get(id).find((entry) => entry.id === path[index + 1]).edge.members.map(m).join(' · ');
       item.append(member);
     }
     result.append(item);
   });
   const mapLink = document.createElement('a');
   mapLink.className = 'dialog-map-link';
-  mapLink.href = pathMapPath(start, end, expanded.checked);
-  mapLink.innerHTML = `지도에서 경로 보기${icon('up')}`;
+  mapLink.href = pathMapPath(start, end, expanded.checked, language);
+  mapLink.innerHTML = `${t('pathOnMap')}${icon('up')}`;
   result.append(mapLink);
 });
 function openLinkedDialog() {
   if (location.hash === '#about') openDialog('about-dialog');
-  if (location.hash === '#path') openDialog('content-path-dialog');
+  if (location.hash === '#path') {
+    openDialog('content-path-dialog');
+    if (initialParams.has('from') && initialParams.has('to')) form.requestSubmit();
+  }
 }
 window.addEventListener('hashchange', openLinkedDialog);
 openLinkedDialog();
+
+initializeNavigation(() => {
+  const pathOpen = document.querySelector('#content-path-dialog').open;
+  const endpoint = (field) => pathOpen ? (data && resolveGroup(data, field.value)) || field.value : null;
+  return {
+    q: document.querySelector('#group-filter')?.value || null,
+    from: endpoint(from),
+    to: endpoint(to),
+    expanded: expanded.checked ? '1' : null,
+    hash: document.querySelector('#about-dialog').open ? '#about' : pathOpen ? '#path' : '',
+  };
+});

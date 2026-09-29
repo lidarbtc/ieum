@@ -1,4 +1,4 @@
-export const normalize = s => String(s).normalize('NFKC').toLowerCase().replace(/[\s.*:_!()·/\-]/g,'');
+export const normalize = s => String(s).normalize('NFKC').toLowerCase().replace(/[\s.*:_!()·/\-'’]/g,'');
 export function scopedData(data, expanded=false) {
   const nodes=data.nodes.filter(n=>expanded||!['external','unit'].includes(n.category));
   const ids=new Set(nodes.map(n=>n.id));
@@ -20,10 +20,10 @@ export function shortestPath(adjacency,start,end){
     for(const b of adjacency.get(a)){if(!parent.has(b.id)){parent.set(b.id,a);queue.push(b.id)}}}
   return null;
 }
-export function searchNodes(nodes,edges,query,aliases={}){
+export function searchNodes(nodes,edges,query,aliases={},memberAliases={}){
   const q=normalize(query);if(!q)return [];
   const matches=new Map();
   for(const n of nodes){const names=[n.name,...(aliases[n.id]||[])];if(names.some(s=>normalize(s).includes(q)))matches.set(n.id,{node:n,members:[],score:names.some(s=>normalize(s)===q)?0:1});}
-  for(const e of edges){const ms=e.members.filter(m=>normalize(m).includes(q));if(ms.length)for(const id of [e.a,e.b]){if(!matches.has(id))matches.set(id,{node:nodes.find(n=>n.id===id),members:[],score:2});matches.get(id).members.push(...ms);}}
+  for(const e of edges){const ms=e.members.filter(m=>[m,...(memberAliases[m]||[])].some(name=>normalize(name).includes(q)));if(ms.length)for(const id of [e.a,e.b]){if(!matches.has(id))matches.set(id,{node:nodes.find(n=>n.id===id),members:[],score:2});matches.get(id).members.push(...ms);}}
   return [...matches.values()].map(m=>({...m,members:[...new Set(m.members)]})).sort((a,b)=>a.score-b.score||a.node.name.localeCompare(b.node.name,'ko'));
 }
