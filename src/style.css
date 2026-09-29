@@ -31,12 +31,8 @@
 :root{color-scheme:light}
 @view-transition{navigation:auto}
 ::view-transition,::view-transition-group(*),::view-transition-image-pair(*),::view-transition-old(*),::view-transition-new(*){pointer-events:none}
-::view-transition-group(root){animation-duration:.14s}
-::view-transition-old(root){animation:none}
-::view-transition-new(root){animation:page-arrive .14s ease-out both;mix-blend-mode:normal}
-::view-transition-group(site-header),::view-transition-new(site-header){animation:none;mix-blend-mode:normal}
+::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none;mix-blend-mode:normal}
 ::view-transition-old(site-header){animation:none;opacity:0}
-@keyframes page-arrive{from{opacity:0}to{opacity:1}}
 
 header{animation:none!important;view-transition-name:site-header;gap:26px}
 aside{animation:none!important}
