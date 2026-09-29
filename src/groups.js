@@ -10,6 +10,11 @@ export function groupPath(id) {
 export function groupMapPath(id) {
   return `/?${new URLSearchParams({ group: id })}`;
 }
+export function pathMapPath(from, to, expanded = false) {
+  const params = new URLSearchParams({ from, to });
+  if (expanded) params.set('expanded', '1');
+  return `/?${params}`;
+}
 export function groupDisplayName(id) {
   const korean = (aliases[id] || []).find((name) => /[가-힣]/.test(name) && name !== id);
   return korean ? `${id} (${korean})` : id;

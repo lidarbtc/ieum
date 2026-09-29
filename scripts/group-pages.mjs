@@ -9,16 +9,19 @@ import { escapeAttribute as escape, renderSeoHead } from './seo.mjs';
 export function githubLink(className = 'github-link') {
   return `<a class="${className}" href="${escape(site.repository)}" target="_blank" rel="noopener noreferrer" aria-label="GitHub 저장소">${icon('github')}<span class="sr-only">GitHub 저장소</span></a>`;
 }
-function pageShell({ title, description, path, body, css, javascript = '', schemas }) {
+function pageShell({ title, description, path, body, css, javascript = '', schemas, aboutMarkup, pathMarkup, groupId = '', groupCategory = '' }) {
   return `<!doctype html>
 <html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#eff7f8">
 ${renderSeoHead({ title, description, path, schemas })}
 <style>${css}</style></head>
-<body class="content-page">
-<header><a class="brand" href="/" aria-label="이음, 지도로"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span><span>이음</span></a><nav aria-label="주요 메뉴"><a class="nav-item" href="/">지도</a><a class="nav-item active" href="/groups/" aria-current="page">그룹 목록</a><a class="nav-item" href="/#about">이음 소개</a></nav>${githubLink()}</header>
+<body class="content-page" data-group-id="${escape(groupId)}" data-group-category="${escape(groupCategory)}">
+<header><a class="brand" href="/" aria-label="이음, 지도로"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span><span>이음</span></a><nav id="content-nav" aria-label="주요 메뉴"><a class="nav-item" href="/">지도</a><a class="nav-item active" href="/groups/" aria-current="page">그룹 목록</a><button class="nav-item" type="button" data-open-dialog="content-path-dialog" aria-haspopup="dialog" aria-controls="content-path-dialog">경로 찾기</button><button class="nav-item" type="button" data-open-dialog="about-dialog" aria-haspopup="dialog" aria-controls="about-dialog">이음 소개</button></nav>${githubLink()}<button id="content-menu-toggle" class="icon-button content-menu-toggle" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="content-nav">${icon("menu")}</button></header>
 <main class="content-main">${body}</main>
 <footer class="content-footer"><a href="/">이음</a><a href="/groups/">그룹 목록</a><a href="${escape(site.repository)}" target="_blank" rel="noopener noreferrer">자료와 코드</a></footer>
+${aboutMarkup}
+${pathMarkup}
+<script async src="/content-navigation.js"></script>
 ${javascript ? `<script>${javascript.replace(/<\/script/gi, '<\\/script')}</script>` : ''}
 </body></html>\n`;
 }
@@ -47,7 +50,7 @@ function memberRows(group) {
     return `<tr><th scope="row">${escape(member)}</th><td>${links.map(({ node }) => groupAnchor(node)).join('<span class="link-separator">, </span>')}</td></tr>`;
   }).join('');
 }
-function detailPage(group, css) {
+function detailPage(group, css, dialogs) {
   const title = `${group.displayName} 공유 멤버와 연결 그룹 | 이음`;
   const description = `${group.displayName}에서 활동한 멤버들이 함께했던 그룹과 출처를 확인할 수 있습니다.`;
   const url = new URL(group.path, site.url).href;
@@ -68,9 +71,9 @@ function detailPage(group, css) {
 <section class="connection-record"><h2>연결 근거</h2><div class="record-connections">${group.primary.map(connectionArticle).join('')}</div></section>
 ${group.additional.length ? `<details class="additional-connections"><summary>유닛·해외·혼성 그룹 연결도 보기</summary>${group.additional.map(connectionArticle).join('')}</details>` : ''}
 <div class="record-bottom"><a href="/groups/">다른 그룹 보기${icon('arrow')}</a><a href="${escape(site.repository)}/blob/main/docs/research-notes.md" target="_blank" rel="noopener noreferrer">전체 조사 기록${icon('up')}</a></div>`;
-  return pageShell({ title, description, path: group.path, body, css, schemas });
+  return pageShell({ title, description, path: group.path, body, css, schemas, ...dialogs, groupId: group.id, groupCategory: group.category });
 }
-function indexPage(catalog, css, javascript) {
+function indexPage(catalog, css, javascript, dialogs) {
   const sections = [
     ['그룹', catalog.filter((group) => !['external', 'unit'].includes(group.category))],
     ['유닛·해외·혼성 그룹', catalog.filter((group) => ['external', 'unit'].includes(group.category))],
@@ -82,17 +85,26 @@ ${sections.filter(([, groups]) => groups.length).map(([title, groups]) => `<sect
   const title = '그룹별 공유 멤버와 활동 기록 | 이음';
   const description = '같은 멤버가 활동한 여자 아이돌 그룹의 기록. 그룹별 공유 멤버와 연결 근거를 찾아볼 수 있습니다.';
   const schemas = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, url: new URL(path, site.url).href, description, inLanguage: site.language, isPartOf: { '@id': `${site.url}#website` } };
-  return pageShell({ title, description, path, body, css, javascript, schemas });
+  return pageShell({ title, description, path, body, css, javascript, schemas, ...dialogs });
 }
-export async function writeGroupPages({ data, outputDirectory, css, javascript }) {
+export async function writeGroupPages({ data, outputDirectory, css, javascript, aboutMarkup, pathMarkup }) {
+  const dialogs = { aboutMarkup, pathMarkup };
   const catalog = createGroupCatalog(data);
   const groupsDirectory = resolve(outputDirectory, 'groups');
   await mkdir(groupsDirectory, { recursive: true });
-  await writeFile(resolve(groupsDirectory, 'index.html'), indexPage(catalog, css, javascript));
+  await writeFile(resolve(groupsDirectory, 'index.html'), indexPage(catalog, css, javascript, dialogs));
   for (const group of catalog) {
     const directory = resolve(groupsDirectory, group.slug);
     await mkdir(directory, { recursive: true });
-    await writeFile(resolve(directory, 'index.html'), detailPage(group, css));
+    await writeFile(resolve(directory, 'index.html'), detailPage(group, css, dialogs));
   }
   return catalog;
+}
+
+export function createPathData(data, catalog) {
+  const paths = new Map(catalog.map((group) => [group.id, group.path]));
+  return {
+    nodes: data.nodes.map(({ id, name, category }) => ({ id, name, category, recordPath: paths.get(id) || null })),
+    edges: data.edges.map(({ a, b, members }) => ({ a, b, members })),
+  };
 }

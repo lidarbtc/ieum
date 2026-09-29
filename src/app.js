@@ -102,9 +102,18 @@ $('#about-scope').onclick=()=>aboutDialog.showModal();
 $('#close-about').onclick=()=>aboutDialog.close();
 aboutDialog.addEventListener('click',event=>{if(event.target===aboutDialog){const r=aboutDialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)aboutDialog.close();}});
 configureScope();
-const requestedGroup=new URLSearchParams(location.search).get('group');
+const initialParams=new URLSearchParams(location.search);
+const requestedGroup=initialParams.get('group');
 const requestedNode=DATA.nodes.find(node=>node.id===requestedGroup);
-if(requestedNode){if(['unit','external'].includes(requestedNode.category)){$('#expanded').checked=true;configureScope();}selectNode(requestedNode.id);}
+const requestedFrom=initialParams.get('from'),requestedTo=initialParams.get('to');
+if(requestedFrom&&requestedTo){
+ if(initialParams.get('expanded')==='1'){$('#expanded').checked=true;configureScope();}
+ $('#path-from').value=requestedFrom;$('#path-to').value=requestedTo;
+ switchTab('path');openInspector();findPath();
+}else if(requestedNode){
+ if(['unit','external'].includes(requestedNode.category)){$('#expanded').checked=true;configureScope();}
+ selectNode(requestedNode.id);
+}
 function showLinkedAbout(){if(location.hash==='#about'&&!aboutDialog.open)aboutDialog.showModal();}
 window.addEventListener('hashchange',showLinkedAbout);
 showLinkedAbout();

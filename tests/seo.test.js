@@ -5,8 +5,9 @@ import { once } from 'node:events';
 import { resolve } from 'node:path';
 import { buildApp, root, outputDirectory } from '../scripts/build.mjs';
 import { createSiteServer } from '../scripts/serve.mjs';
+import { analyze, scopedData, shortestPath } from '../src/core.js';
 import { site } from '../site.config.js';
-import { createGroupCatalog, groupMapPath, groupPath } from '../src/groups.js';
+import { createGroupCatalog, groupMapPath, groupPath, pathMapPath } from '../src/groups.js';
 
 let head, origin, server, catalog, homepage;
 before(async () => {
@@ -171,4 +172,48 @@ test('detail routes and Korean slugs work without JavaScript', async () => {
   assert.equal(indexAlias.headers.get('location'), '/groups/izone/');
   const missing = await fetch(origin + '/groups/missing-group/');
   assert.equal(missing.status, 404);
+});
+
+
+test('group pages contain matching navigation and local about/path dialogs', async () => {
+  const about = homepage.match(/<dialog id="about-dialog"[\s\S]*?<\/dialog>/)[0];
+  for (const file of ['groups/index.html', 'groups/feverse/index.html']) {
+    const html = await readFile(resolve(outputDirectory, file), 'utf8');
+    assert.match(html, /<button[^>]+data-open-dialog="content-path-dialog"[^>]*>경로 찾기<\/button>/);
+    assert.match(html, /<button[^>]+data-open-dialog="about-dialog"[^>]*>이음 소개<\/button>/);
+    assert.ok(html.includes(about));
+    assert.match(html, /<dialog id="content-path-dialog"/);
+    assert.match(html, /src="\/content-navigation\.js"/);
+    assert.doesNotMatch(html, /href="\/#about"|__ABOUT_DIALOG__/);
+  }
+  const navigation = await readFile(resolve(outputDirectory, 'content-navigation.js'), 'utf8');
+  assert.ok(navigation.length < 50_000);
+  assert.doesNotMatch(navigation, /WebGLRenderer/);
+});
+
+test('content path data preserves graph scope and existing shortest paths', async () => {
+  const response = await fetch(origin + '/path-data.json');
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type'), /application\/json/);
+  const data = await response.json();
+  assert.equal(data.nodes.length, 626);
+  const core = scopedData(data);
+  assert.equal(core.nodes.length, 617);
+  assert.equal(core.edges.length, 159);
+  const { adjacency } = analyze(core.nodes, core.edges);
+  const path = shortestPath(adjacency, '버스터즈', 'aespa');
+  assert.equal(path.length, 8);
+  assert.equal(shortestPath(adjacency, 'BLACKPINK', 'aespa'), null);
+  assert.deepEqual(shortestPath(adjacency, 'BLACKPINK', 'BLACKPINK'), ['BLACKPINK']);
+  assert.equal(data.nodes.find(node => node.id === 'Feverse').recordPath, '/groups/feverse/');
+  assert.equal(data.nodes.find(node => node.id === 'BLACKPINK').recordPath, null);
+  assert.equal((await fetch(origin + '/content-navigation.js')).status, 200);
+});
+
+test('map path links preserve endpoints and expansion without fragment navigation', () => {
+  const url = new URL(pathMapPath('이달의 소녀 1/3', 'ARTMS', true), site.url);
+  assert.equal(url.searchParams.get('from'), '이달의 소녀 1/3');
+  assert.equal(url.searchParams.get('to'), 'ARTMS');
+  assert.equal(url.searchParams.get('expanded'), '1');
+  assert.equal(url.hash, '');
 });

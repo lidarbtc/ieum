@@ -1,0 +1,16 @@
+<dialog id="content-path-dialog" aria-labelledby="content-path-title">
+  <div class="dialog-top"><h2 id="content-path-title">경로 찾기</h2><button class="icon-button" type="button" data-close-dialog aria-label="경로 찾기 닫기"><span data-icon="close"></span></button></div>
+  <p class="muted">두 그룹이 어떤 멤버를 거쳐 이어지는지 찾아봐요.</p>
+  <form id="content-path-form">
+    <div class="path-fields">
+      <label for="content-path-from">출발</label><input id="content-path-from" list="content-group-names" value="버스터즈" autocomplete="off" required>
+      <span class="field-connector" aria-hidden="true"></span>
+      <label for="content-path-to">도착</label><input id="content-path-to" list="content-group-names" value="aespa" autocomplete="off" required>
+    </div>
+    <datalist id="content-group-names"></datalist>
+    <label class="check"><input id="content-path-expanded" type="checkbox"><span>유닛·해외·혼성 그룹 포함</span></label>
+    <button class="primary" type="submit">경로 찾기 <span data-icon="arrow"></span></button>
+  </form>
+  <p id="content-path-status" class="muted" role="status"></p>
+  <div id="content-path-result" aria-live="polite"></div>
+</dialog>

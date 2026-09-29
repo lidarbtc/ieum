@@ -64,7 +64,6 @@ body.content-page{height:auto;min-height:100svh;overflow:auto;background:linear-
  .content-page header{height:74px;padding:0 20px;gap:24px}
  .content-page header nav{display:flex;gap:16px}
  .content-page header .nav-item{font-size:12px}
- .content-page header .nav-item:last-child{display:none}
  .content-page .content-main{padding:25px 21px 48px}
  .content-page h1{font-size:31px;letter-spacing:-1px}
  .breadcrumbs{font-size:11px;gap:8px;margin-bottom:29px}
@@ -81,3 +80,24 @@ body.content-page{height:auto;min-height:100svh;overflow:auto;background:linear-
  .record-heading h3{font-size:18px}
 }
 @media(max-width:380px){.group-directory{grid-template-columns:1fr}.content-page header{gap:15px}.content-page header nav{gap:12px}.content-page .brand{font-size:26px}}
+
+.content-menu-toggle{display:none}
+.content-page dialog{overscroll-behavior:contain}
+#content-path-dialog .dialog-top{align-items:center;margin-bottom:14px}
+#content-path-dialog .dialog-top h2{margin:0}
+#content-path-dialog form{margin-top:24px}
+#content-path-dialog .path-item a{font-size:13px;font-weight:550;color:#245269;text-decoration:none}
+#content-path-dialog .path-item a:hover{text-decoration:underline;text-underline-offset:3px}
+#content-path-status{margin:15px 0}
+#content-path-result .dialog-map-link{display:inline-flex;align-items:center;gap:6px;margin-top:3px;padding:11px 13px;background:#e8f4f8;border-radius:10px;font-size:12px;color:#267891}
+.dialog-map-link svg{width:13px;height:13px}
+@media(max-width:760px){
+ .content-page header{gap:12px}
+ .content-menu-toggle{display:grid;width:40px;height:44px}
+ .content-page header #content-nav{display:none;position:absolute;top:calc(100% - 3px);left:18px;right:18px;z-index:30;background:#fff;border:1px solid #e1edf2;border-radius:15px;padding:8px;box-shadow:0 12px 35px #2a6b861b}
+ .content-page header #content-nav.is-open{display:flex;flex-direction:column;align-items:stretch;gap:0}
+ .content-page header #content-nav .nav-item{display:block;text-align:left;min-height:44px;padding:5px 12px;font-size:14px;line-height:34px;border-radius:9px}
+ .content-page header #content-nav .nav-item:hover{background:#edf8fb}
+ .content-page header #content-nav .nav-item.active:after{display:none}
+ .content-page header #content-nav .nav-item.active{background:#edf6f9}
+}
